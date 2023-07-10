@@ -1,3 +1,4 @@
+#include <bits/stdc++.h>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -12,47 +13,58 @@
 
 using namespace std;
 
-map<int, string> getFileToMap;
-map<int, string> getUrlForSolution;
+map<int, string> getFileToMap;       // Map to store file lines
+map<int, string> getUrlForSolution;  // Map to store solution URLs
 
 class Problems {
 public:
-    string differentProblems();
-    std::pair<int, string> SearchProblemExist(int, string, int);
-} getProblem;
+    string differentProblems();  // Method to get the search query from the user
+    std::pair<int, string> searchProblemExist(int, string, int);  // Method to search for a problem
+};
 
 class Solutions : public Problems {
 public:
-    vector<int> filter_search[10];
-    long Life_solution(string, int);
-    void subSearch(int, int, string);
+    vector<int> filterSearch[10];  // Array of vectors to store search results
+    long lifeSolution(string, int);  // Method to perform search and count occurrences
+    void subSearch(int, int, string);  // Method to process search results and open URL
     void printQuestions(int fetchQuestion) {
-        cout << "Question less Probable" << fetchQuestion << endl;
+        cout << "Question with less probability: " << fetchQuestion << endl;
     }
-} solution;
+};
 
-void openURL(const string& url_str) {
-    ShellExecuteA(NULL, "open", url_str.c_str(), NULL, NULL, SW_SHOWNORMAL);
+void openURL(const string& urlStr) {
+    ShellExecuteA(NULL, "open", urlStr.c_str(), NULL, NULL, SW_SHOWNORMAL);
 }
 
-long Solutions::Life_solution(string wordSearch, int pushKey) {
+string Problems::differentProblems() {
+    string anythingSpecificProblem;
+    cout << "Please enter your search query: " << endl;
+    std::getline(std::cin, anythingSpecificProblem);
+    return anythingSpecificProblem;
+}
+
+std::pair<int, string> Problems::searchProblemExist(int x, string problem, int y) {
+    return std::make_pair(x + y, problem);
+}
+
+long Solutions::lifeSolution(string wordSearch, int pushKey) {
     int y = 0;
-    long sub_search_count = 0;
+    long subSearchCount = 0;
     string line;
     std::smatch m;
 
-    ifstream getFile("C:\\Users\\dshre\\Cpp Programs\\Generic_Problem.txt");
+    ifstream getFile("C:\\Users\\dshre\\Cpp Programs\\queries.txt");
 
     if (getFile.is_open()) {
         while (getline(getFile, line)) {
-            getFileToMap.insert(std::pair<int, string>(++y, line));
+            getFileToMap.insert(std::pair<int, string>(++y, line));  // Store file lines in the map
         }
 
         for (map<int, string>::iterator itr = getFileToMap.begin(); itr != getFileToMap.end(); ++itr) {
             try {
                 std::regex e("\\b" + wordSearch + "\\b", regex_constants::icase);
                 if (std::regex_search(itr->second, m, e)) {
-                    filter_search[pushKey].push_back(itr->first);
+                    filterSearch[pushKey].push_back(itr->first);  // Store line numbers with matching words
                 }
             }
             catch (const std::regex_error& oor) {
@@ -61,13 +73,13 @@ long Solutions::Life_solution(string wordSearch, int pushKey) {
             }
         }
 
-        if (filter_search[pushKey].empty()) {
-            cout << "NO matches found " << endl;
+        if (filterSearch[pushKey].empty()) {
+            cout << "No matches found." << endl;
         }
         else {
             try {
-                sub_search_count = filter_search[pushKey].size();
-                cout << wordSearch << " " << "count is " << sub_search_count << endl;
+                subSearchCount = filterSearch[pushKey].size();  // Count the number of occurrences
+                cout << wordSearch << " count is " << subSearchCount << endl;
             }
             catch (const std::out_of_range& oor) {
                 std::cerr << "Out of Range error: " << oor.what() << '\n';
@@ -77,7 +89,7 @@ long Solutions::Life_solution(string wordSearch, int pushKey) {
         getFile.close();
     }
 
-    return sub_search_count;
+    return subSearchCount;
 }
 
 void Solutions::subSearch(int subSearchArray, int noOfWords, string searchedString) {
@@ -90,10 +102,10 @@ void Solutions::subSearch(int subSearchArray, int noOfWords, string searchedStri
     if (subSearchArray <= noOfWords && noOfWords > 0) {
         try {
             for (int i = 0; i < 10; i++) {
-                if (!filter_search[i].empty()) {
+                if (!filterSearch[i].empty()) {
                     for (int j = 1; j < 10; j++) {
-                        filter_search[0].insert(filter_search[0].end(), filter_search[j].begin(), filter_search[j].end());
-                        filter_search[j].erase(filter_search[j].begin(), filter_search[j].end());
+                        filterSearch[0].insert(filterSearch[0].end(), filterSearch[j].begin(), filterSearch[j].end());
+                        filterSearch[j].erase(filterSearch[j].begin(), filterSearch[j].end());
                         freq[j - 1] = -1;
                     }
                 }
@@ -102,68 +114,64 @@ void Solutions::subSearch(int subSearchArray, int noOfWords, string searchedStri
                 }
             }
 
-            sort(filter_search[0].begin(), filter_search[0].end());
+            sort(filterSearch[0].begin(), filterSearch[0].end());  // Sort the line numbers
 
-            for (int q = 0; q < filter_search[0].size(); q++) {
+            for (int q = 0; q < filterSearch[0].size(); q++) {
                 int count = 1;
-                for (int p = q + 1; p < filter_search[0].size(); p++) {
-                    if (filter_search[0].at(q) == filter_search[0].at(p)) {
+                for (int p = q + 1; p < filterSearch[0].size(); p++) {
+                    if (filterSearch[0].at(q) == filterSearch[0].at(p)) {
                         count++;
-                        freq[p] = 0;
+                        freq[p] = 0;  // Mark duplicate line numbers
                     }
                 }
                 if (freq[q] != 0) {
-                    freq[q] = count;
+                    freq[q] = count;  // Store the occurrence count for each line number
                 }
             }
 
-            for (int w = 0; w < filter_search[0].size(); w++) {
+            for (int w = 0; w < filterSearch[0].size(); w++) {
                 if (freq[w] != 0) {
-                    cout << filter_search[0].at(w) << " " << freq[w] << endl;
+                    cout << filterSearch[0].at(w) << " " << freq[w] << endl;  // Print line numbers with occurrence count
                 }
             }
 
-            int max_freq = filter_search[0].size();
-            int max_elements = std::distance(freq, std::max_element(freq, freq + max_freq));
+            int maxFreq = filterSearch[0].size();
+            int maxElements = std::distance(freq, std::max_element(freq, freq + maxFreq));  // Find the line number with maximum occurrence
 
-            cout << getFileToMap.at(filter_search[0].at(max_elements)) << endl;
+            cout << getFileToMap.at(filterSearch[0].at(maxElements)) << endl;  // Print the line with maximum occurrence
 
-            ifstream soln("C:\\Users\\dshre\\Cpp Programs\\Generic_Solution.txt");
+            ifstream soln("C:\\Users\\dshre\\Cpp Programs\\solutions.txt");
             if (soln.is_open()) {
                 while (getline(soln, line)) {
-                    getUrlForSolution.insert(std::pair<int, string>(++x, line));
+                    getUrlForSolution.insert(std::pair<int, string>(++x, line));  // Store solution URLs in the map
                 }
             }
             soln.close();
 
-            string str(getUrlForSolution.at(filter_search[0].at(max_elements)));
-            openURL(str);
+            string str(getUrlForSolution.at(filterSearch[0].at(maxElements)));  // Get the URL for the line with maximum occurrence
+            openURL(str);  // Open the URL in the default browser
         }
         catch (const std::out_of_range& oor) {
             std::cerr << "Out of Range error: " << oor.what() << '\n';
         }
     }
     else {
-        cout << "Unable to find the solution" << endl;
-        cout << "But We will add your question to our priority list of questions" << endl;
-        out.open("C:\\Users\\dshre\\Cpp Programs\\Generic_Problem.txt", std::ios::app);
+        cout << "Unable to find the solution." << endl;
+        cout << "But we will add your question to our priority list of questions." << endl;
+        out.open("C:\\Users\\dshre\\Cpp Programs\\queries.txt", std::ios::app);
         std::string str = searchedString;
         out << endl;
-        out << getFileToMap.size() + 2 << "." << str;
+        out << getFileToMap.size() + 2 << "." << str;  // Add the question to the queries file
         out.close();
     }
 }
 
-string Problems::differentProblems() {
-    string anythingSpecificProblem;
-    cout << "Please Enter your Search " << endl;
-    std::getline(std::cin, anythingSpecificProblem);
-    return anythingSpecificProblem;
-}
-
 int main() {
     map<int, string> problemStatement;
-    string questionSearched = getProblem.differentProblems();
+    Problems getProblem;
+    Solutions solution;
+
+    string questionSearched = getProblem.differentProblems();  // Get the search query from the user
     string arr[20];
     int i = 0;
     int q = 0;
@@ -171,31 +179,31 @@ int main() {
 
     stringstream ssin(questionSearched);
     while (ssin.good() && i < 20) {
-        ssin >> arr[i];
+        ssin >> arr[i];  // Split the search query into words
         ++i;
     }
 
-    int noOfwords = i;
+    int noOfWords = i;
 
     for (int x = 0; x < 20; x++) {
         if (arr[x] == "") {
             break;
         }
         else {
-            problemStatement.insert(std::pair<int, string>(x + 1, arr[x]));
+            problemStatement.insert(std::pair<int, string>(x + 1, arr[x]));  // Store the search query words in a map
         }
     }
 
     for (map<int, string>::iterator it = problemStatement.begin(); it != problemStatement.end(); ++it) {
         q += 1;
-        long wordFound = solution.Life_solution(problemStatement.at(q), q - 1);
+        long wordFound = solution.lifeSolution(problemStatement.at(q), q - 1);  // Search for each word in the query
         if (wordFound > 0) {
-            ++wordPresent;
+            ++wordPresent;  // Increment the count if the word is found
         }
         else {
-            cout << problemStatement.at(q) << " word is not found" << endl;
+            cout << problemStatement.at(q) << " word is not found." << endl;
         }
     }
 
-    solution.subSearch(wordPresent, noOfwords, questionSearched);
+    solution.subSearch(wordPresent, noOfWords, questionSearched);  // Process the search results and open the URL if applicable
 }
